@@ -18,4 +18,7 @@ public class AccountService {
     public Account registerAccount(Account account){
         return accountDAO.accountRegistration(account);
     }
+    public Account login(Account account){
+        return accountDAO.getAccount(account);
+    }
 }
