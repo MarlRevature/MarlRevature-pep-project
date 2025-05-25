@@ -9,7 +9,7 @@ public class AccountDAO {
     {
         Connection connection = ConnectionUtil.getConnection();
         try {
-            if (account.getUsername().length()>0 && account.getPassword().length()>=4){
+            if (!account.getUsername().isEmpty() && account.getPassword().length()>=4){
                 String sql = "insert into account (username,password) values (?,?)" ;
                 PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
                 ps.setString(1, account.getUsername());

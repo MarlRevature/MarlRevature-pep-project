@@ -4,6 +4,8 @@ import static org.mockito.ArgumentMatchers.nullable;
 
 import java.util.List;
 
+import org.h2.util.json.JSONObject;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -38,6 +40,10 @@ public class SocialMediaController {
         app.post("/messages", this::postMessageHandler);
         app.get("/messages", this::getAllMessagesHandler);
         app.get("/messages/{message_id}", this::getMessageHandler);
+        app.delete("/messages/{message_id}", this::deleteMessageHandler);
+        app.patch("/messages/{message_id}", this::updateMessageHandler);
+        app.get("/accounts/{account_id}/messages", this::getAllMessagesFromUser);
+
         return app;
     }
 
@@ -67,6 +73,7 @@ public class SocialMediaController {
             ctx.status(401);
         }
     }
+    
     private void postMessageHandler(Context ctx) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         Message message = mapper.readValue(ctx.body(), Message.class);
@@ -77,6 +84,7 @@ public class SocialMediaController {
             ctx.status(400);
         }
     }
+    
     private void getAllMessagesHandler(Context ctx) {
         List<Message> messages = messageService.getAllMessages();
         ctx.json(messages);
@@ -90,5 +98,37 @@ public class SocialMediaController {
         if (message!=null){
             ctx.json(mapper.writeValueAsString(message));
         } 
+    }
+
+    private void deleteMessageHandler(Context ctx) throws JsonProcessingException
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        int index = Integer.parseInt(ctx.pathParam("message_id"));
+        Message message = messageService.deleteMessage(index);
+        if (message!=null){
+            ctx.json(mapper.writeValueAsString(message));
+        }
+    }
+
+    private void updateMessageHandler(Context ctx) throws JsonProcessingException
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        int index = Integer.parseInt(ctx.pathParam("message_id"));
+        int msg_length =  ctx.body().length();
+        String message_text =  ctx.body().substring(18, msg_length-3);
+        Message updated_message = messageService.updateMessage(index,message_text);
+        if (updated_message!=null){
+            ctx.json(mapper.writeValueAsString(updated_message));
+        } else{
+            ctx.status(400);
+        }
+    }
+
+    private void getAllMessagesFromUser(Context ctx)
+    {
+        int account_id = Integer.parseInt(ctx.pathParam("account_id"));
+        List<Message> messages = messageService.getAllMessagesFromUser(account_id);
+        ctx.json(messages);
+        
     }
 }

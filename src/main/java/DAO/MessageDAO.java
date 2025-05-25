@@ -74,4 +74,68 @@ public class MessageDAO {
         }
         return null;
     }
+
+    public Message deleteMessage(int message_id) {
+        Connection connection = ConnectionUtil.getConnection();
+        try {
+            Message message = getMessage(message_id);
+            if(message != null)
+            {
+                String sql = "delete from message where message_id=?" ;
+                PreparedStatement ps = connection.prepareStatement(sql);
+                ps.setInt(1, message_id);
+                ps.executeUpdate();
+                
+                return message;
+            }
+            
+        } catch (Exception e) {
+            // TODO: handle exception
+            System.out.println(e.getMessage());
+        }
+        return null;
+    }
+
+    public Message updateMessage(int message_id, String message_text) {
+        Connection connection = ConnectionUtil.getConnection();
+        try {
+            Message message = getMessage(message_id);
+            if(message != null && message_text.length()<255 && !message_text.isEmpty())
+            {
+                String sql = "update message set message_text=? where message_id=?" ;
+                PreparedStatement ps = connection.prepareStatement(sql);
+                ps.setString(1, message_text);
+                ps.setInt(2, message_id);
+                ps.executeUpdate();
+                message.setMessage_text(message_text);
+                return message;
+            }
+        } catch (Exception e) {
+            // TODO: handle exception
+            System.out.println(e.getMessage());
+        }
+        return null;
+    }
+
+    public List<Message> getAllMessagesFromUser(int account_id) {
+        Connection connection = ConnectionUtil.getConnection();
+        List<Message> messages = new ArrayList<>();
+        try {
+            String sql = "select * from message where posted_by=?" ;
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, account_id);
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()){
+                Message message = new Message(rs.getInt("message_id"),rs.getInt("posted_by"),
+                rs.getString("message_text"),rs.getLong("time_posted_epoch"));
+                messages.add(message);
+            }
+            return messages;
+            
+        } catch (Exception e) {
+            // TODO: handle exception
+            System.out.println(e.getMessage());
+        }
+        return null;
+    }
 }
