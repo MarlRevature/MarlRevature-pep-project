@@ -2,11 +2,15 @@ package Controller;
 
 import static org.mockito.ArgumentMatchers.nullable;
 
+import java.util.List;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import Model.Account;
+import Model.Message;
 import Service.AccountService;
+import Service.MessageService;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
@@ -17,9 +21,10 @@ import io.javalin.http.Context;
  */
 public class SocialMediaController {
     AccountService accountService;
-
+    MessageService messageService;
     public SocialMediaController(){
         this.accountService = new AccountService();
+        this.messageService = new MessageService();
     }
     /**
      * In order for the test cases to work, you will need to write the endpoints in the startAPI() method, as the test
@@ -30,35 +35,60 @@ public class SocialMediaController {
         Javalin app = Javalin.create();
         app.post("/register", this::postAccountRegistrationHandler);
         app.post("/login", this::postLoginHandler);
+        app.post("/messages", this::postMessageHandler);
+        app.get("/messages", this::getAllMessagesHandler);
+        app.get("/messages/{message_id}", this::getMessageHandler);
         return app;
     }
 
     /**
      * This is an example handler for an example endpoint.
-     * @param context The Javalin Context object manages information about both the HTTP request and response.
+     * @param ctx The Javalin Context object manages information about both the HTTP request and response.
      */
-    private void postAccountRegistrationHandler(Context context)  throws JsonProcessingException  {
+    private void postAccountRegistrationHandler(Context ctx)  throws JsonProcessingException  {
         ObjectMapper mapper = new ObjectMapper();
-        Account account = mapper.readValue(context.body(), Account.class);
+        Account account = mapper.readValue(ctx.body(), Account.class);
         Account registeredAccount = accountService.registerAccount(account);
         if (registeredAccount!=null){
-            context.json(mapper.writeValueAsString(registeredAccount));
+            ctx.json(mapper.writeValueAsString(registeredAccount));
         } else {
-            context.status(400);
+            ctx.status(400);
         }
     }
 
-    private void postLoginHandler(Context context)  throws JsonProcessingException 
+    private void postLoginHandler(Context ctx)  throws JsonProcessingException 
     {
         ObjectMapper mapper = new ObjectMapper();
-        Account account = mapper.readValue(context.body(), Account.class);
+        Account account = mapper.readValue(ctx.body(), Account.class);
         Account loggedAccount = accountService.login(account);
         if (loggedAccount!=null){
-            context.json(mapper.writeValueAsString(loggedAccount));
+            ctx.json(mapper.writeValueAsString(loggedAccount));
         } else {
-            context.status(401);
+            ctx.status(401);
         }
     }
+    private void postMessageHandler(Context ctx) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        Message message = mapper.readValue(ctx.body(), Message.class);
+        Message insertedMessage = messageService.insertMessage(message);
+        if (insertedMessage!=null){
+            ctx.json(mapper.writeValueAsString(insertedMessage));
+        } else{
+            ctx.status(400);
+        }
+    }
+    private void getAllMessagesHandler(Context ctx) {
+        List<Message> messages = messageService.getAllMessages();
+        ctx.json(messages);
+    }
 
-
+    private void getMessageHandler(Context ctx) throws JsonProcessingException
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        int index = Integer.parseInt(ctx.pathParam("message_id"));
+        Message message = messageService.getMessage(index);
+        if (message!=null){
+            ctx.json(mapper.writeValueAsString(message));
+        } 
+    }
 }
